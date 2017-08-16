@@ -37,10 +37,10 @@ import json
 # print(soup.prettify())
 
 
-max_results_per_city = 100
+max_results_per_city = 300
 city_set = ['New+York', 'Chicago', 'San+Francisco', 'Austin', 'Seattle', 'Los+Angeles', 'Philadelphia', 'Atlanta',
             'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington+DC', 'Boulder']
-columns = ["city", "job_title","company_industry","company_name", "location", "summary", "salary"]
+columns = ["city", "job_title","company_industry","company_name", "location", "summary", "salary", "url"]
 #columns = ["city", "job_title", "company_name", "location", "summary", "salary"]
 sample_df = pd.DataFrame(columns=columns)
 
@@ -79,7 +79,7 @@ for city in city_set:
                             print("------------------------------------------------------------")
                         except:
                             print("haha")
-                            job_post.append("Nothing_found")
+                            job_post.append("Nothing found")
                             # job_post.append("Nothing_found")
                             # print(sample_df[['company_industry']])
                             # print(sample_df[sample_df.columns[0:3]])
@@ -88,7 +88,7 @@ for city in city_set:
                 job_post.append("invalid url")
 
         else:
-            job_post.append("Nothing_found")
+            job_post.append("Nothing found")
             print("url not found")
 
     company = div.find_all(name="span", attrs={"class": "company"})
@@ -116,12 +116,16 @@ for city in city_set:
             div_three = div_two.find("div")
             job_post.append(div_three.text.strip())
         except:
-            job_post.append("Nothing_found")
+            job_post.append("Nothing found")
             # appending list of job post info to dataframe at index num
+    if url != None:
+        job_post.append(url)
+    else:
+        job_post.append("No url found")
     sample_df.loc[num] = job_post
 
 # saving sample_df as a local csv file — define your own local path to save contents
-sample_df.to_csv("JobsWithCompanyBackground.csv", encoding='utf-8')
+sample_df.to_csv("Result_30_Pages.csv", encoding='utf-8')
 # pathName = "C:\Users\JiLi\Desktop\JobPosting.csv"
 # sample_df.to_csv(pathName)
 #
