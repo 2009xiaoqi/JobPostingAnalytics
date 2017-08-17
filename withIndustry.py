@@ -37,95 +37,95 @@ import json
 # print(soup.prettify())
 
 
-max_results_per_city = 300
+max_results_per_city = 100
 city_set = ['New+York', 'Chicago', 'San+Francisco', 'Austin', 'Seattle', 'Los+Angeles', 'Philadelphia', 'Atlanta',
             'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington+DC', 'Boulder']
-columns = ["city", "job_title","company_industry","company_name", "location", "summary", "salary", "url"]
+columns = ["job_title","company_industry","company_name", "location", "summary", "salary", "url"]
 #columns = ["city", "job_title", "company_name", "location", "summary", "salary"]
 sample_df = pd.DataFrame(columns=columns)
 
-for city in city_set:
-    for start in range(0, max_results_per_city, 10):
-        page = requests.get('https://www.indeed.com/jobs?q=executive+director&l=' + str(city) + '&start=' + str(start))
-        time.sleep(1)  # ensuring at least 1 second between page grabs
-        soup = BeautifulSoup(page.text, "lxml", from_encoding="utf-8")
+#for city in city_set:
+for start in range(0, max_results_per_city, 10):
+    #page = requests.get('https://www.indeed.com/jobs?q=executive+director&l=' + str(city) + '&start=' + str(start))
+    page = requests.get('https://www.indeed.com/jobs?q=executive+director&l=' + '&start=' + str(start))
+    time.sleep(1)  # ensuring at least 1 second between page grabs
+    soup = BeautifulSoup(page.text, "lxml", from_encoding="utf-8")
     for div in soup.find_all(name="div", attrs={"class": "row"}):
         # specifying row num for index of job posting in dataframe
         num = (len(sample_df) + 1)
         # creating an empty list to hold the data for each posting
         job_post = []
         # append city name
-        job_post.append(city)
+        #job_post.append(city)
         # grabbing job title
-    for a in div.find_all(name="a", attrs={"data-tn-element": "jobTitle"}):
-        job_post.append(a["title"])
-        url = "https://www.indeed.com" + a["href"]
-        # print url;
-        if url != None:  # if company link exists, access it. Otherwise, skip.
-            try:
-                page = requests.get(url)
-                # specifying a desired format of “page” using the html parser - this allows python to read the various components of the page, rather than treating it as one long string.
-                soup = BeautifulSoup(page.text, "html.parser")
-                # grabbing company and industry info: get into a deep layer
-                temp = soup.find_all(name="span", attrs={"class":"summary"})
-                if temp.__len__() == 0:
-                    job_post.append("No Summary found")
-                else:
-                    for b in soup.find_all(name="span", attrs={"class": "summary"}):
-                        # job_post.append(b.text.strip()) # append the first <p> which is the companry info and industry info
-                        try:
-                            job_post.append(b.find('p').text.strip())
-                            print(b.find('p').text.strip())
-                            print("------------------------------------------------------------")
-                        except:
-                            print("haha")
-                            job_post.append("Nothing found")
-                            # job_post.append("Nothing_found")
-                            # print(sample_df[['company_industry']])
-                            # print(sample_df[sample_df.columns[0:3]])
-            except:
-                print("invalid url")
-                job_post.append("invalid url")
+        for a in div.find_all(name="a", attrs={"data-tn-element": "jobTitle"}):
+            job_post.append(a["title"])
+            url = "https://www.indeed.com" + a["href"]
+            # print url;
+            if url != None:  # if company link exists, access it. Otherwise, skip.
+                try:
+                    page = requests.get(url)
+                    # specifying a desired format of “page” using the html parser - this allows python to read the various components of the page, rather than treating it as one long string.
+                    soup = BeautifulSoup(page.text, "html.parser")
+                    # grabbing company and industry info: get into a deep layer
+                    temp = soup.find_all(name="span", attrs={"class":"summary"})
+                    if temp.__len__() == 0:
+                        job_post.append("No Summary found")
+                    else:
+                        for b in soup.find_all(name="span", attrs={"class": "summary"}):
+                            # job_post.append(b.text.strip()) # append the first <p> which is the companry info and industry info
+                            try:
+                                job_post.append(b.find('p').text.strip())
+                                print(b.find('p').text.strip())
+                                print("------------------------------------------------------------")
+                            except:
+                                print("haha")
+                                job_post.append("Nothing_found")
+                                # job_post.append("Nothing_found")
+                                # print(sample_df[['company_industry']])
+                                # print(sample_df[sample_df.columns[0:3]])
+                except:
+                    print("invalid url")
+                    job_post.append("invalid url")
 
+            else:
+                job_post.append("Nothing_found")
+                print("url not found")
+        company = div.find_all(name="span", attrs={"class": "company"})
+        if len(company) > 0:
+            for b in company:
+                job_post.append(b.text.strip())
         else:
-            job_post.append("Nothing found")
-            print("url not found")
-
-    company = div.find_all(name="span", attrs={"class": "company"})
-    if len(company) > 0:
-        for b in company:
-            job_post.append(b.text.strip())
-    else:
-        sec_try = div.find_all(name="span", attrs={"class": "result-link-source"})
-        for span in sec_try:
+            sec_try = div.find_all(name="span", attrs={"class": "result-link-source"})
+            for span in sec_try:
+                job_post.append(span.text)
+                # grabbing location name
+        c = div.findAll('span', attrs={'class': 'location'})
+        for span in c:
             job_post.append(span.text)
-            # grabbing location name
-    c = div.findAll('span', attrs={'class': 'location'})
-    for span in c:
-        job_post.append(span.text)
-        # grabbing summary text
-    d = div.findAll('span', attrs={'class': 'summary'})
-    for span in d:
-        job_post.append(span.text.strip())
-        # grabbing salary
-    try:
-        job_post.append(div.find('nobr').text)
-    except:
+            # grabbing summary text
+        d = div.findAll('span', attrs={'class': 'summary'})
+        for span in d:
+            job_post.append(span.text.strip())
+            # grabbing salary
         try:
-            div_two = div.find(name="div", attrs={"class": "sjcl"})
-            div_three = div_two.find("div")
-            job_post.append(div_three.text.strip())
+            job_post.append(div.find('nobr').text)
         except:
-            job_post.append("Nothing found")
-            # appending list of job post info to dataframe at index num
-    if url != None:
-        job_post.append(url)
-    else:
-        job_post.append("No url found")
-    sample_df.loc[num] = job_post
+            try:
+                div_two = div.find(name="div", attrs={"class": "sjcl"})
+                div_three = div_two.find("div")
+                job_post.append(div_three.text.strip())
+            except:
+                job_post.append("Nothing_found")
+                # appending list of job post info to dataframe at index num
+        if url != None:
+            job_post.append(url)
+        else:
+            job_post.append("No url found")
+        sample_df.loc[num] = job_post
 
 # saving sample_df as a local csv file — define your own local path to save contents
-sample_df.to_csv("Result_30_Pages.csv", encoding='utf-8')
+sample_df.to_csv("3.csv", encoding='utf-8')
 # pathName = "C:\Users\JiLi\Desktop\JobPosting.csv"
 # sample_df.to_csv(pathName)
 #
