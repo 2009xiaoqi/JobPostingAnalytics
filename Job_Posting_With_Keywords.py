@@ -51,17 +51,16 @@ technology_skills=["AI", "Blockchain", "Bots", "Cloud Platforms", "Cognitive Com
 # print(soup.prettify())
 
 
-max_results_per_city = 10
+max_results_per_city = 100
 city_set = ['New+York', 'Chicago', 'San+Francisco', 'Austin', 'Seattle', 'Los+Angeles', 'Philadelphia', 'Atlanta',
             'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington+DC', 'Boulder']
 columns = ["job_title","company_industry","key_words","company_name", "location", "summary", "salary", "url"]
 #columns = ["city", "job_title", "company_name", "location", "summary", "salary"]
 sample_df = pd.DataFrame(columns=columns)
-
 #for city in city_set:
 for start in range(0, max_results_per_city, 10):
     #page = requests.get('https://www.indeed.com/jobs?q=executive+director&l=' + str(city) + '&start=' + str(start))
-    page = requests.get('https://www.indeed.com/jobs?q=executive+director&l=' + '&start=' + str(start))# page for executive and director
+    page = requests.get('https://www.indeed.com/jobs?q=data+scientist&l=' + '&start=' + str(start))# page for executive and director
     #page = requests.get('https://www.indeed.com/jobs?q=scientist&l=' + '&start=' + str(start)) # page for scientist
     #page = requests.get('https://www.indeed.com/jobs?q=architect&l=' + '&start=' + str(start))  # page for architect
     #page = requests.get('https://www.indeed.com/jobs?q=senior+architect+engineer&l=' + str(start))  # page for architect engineer
@@ -76,10 +75,10 @@ for start in range(0, max_results_per_city, 10):
         # append city name
         #job_post.append(city)
         # grabbing job title
+        key_words = []
         for a in div.find_all(name="a", attrs={"data-tn-element": "jobTitle"}):
             job_post.append(a["title"])
             url = "https://www.indeed.com" + a["href"]
-            # print url;
             if url != None:  # if company link exists, access it. Otherwise, skip.
                 try:
                     page = requests.get(url)
@@ -88,8 +87,8 @@ for start in range(0, max_results_per_city, 10):
                     # grabbing company and industry info: get into a deep layer
                     temp = soup.find_all(name="span", attrs={"class":"summary"})
                     if temp.__len__() == 0:
-                        job_post.append("No Summary found")
-                        job_post.append("No Key Words found")
+                        job_post.append("No summary found")
+                        job_post.append("No key words found")
                     else:
                         for b in soup.find_all(name="span", attrs={"class": "summary"}):
                             # job_post.append(b.text.strip()) # append the first <p> which is the companry info and industry info
@@ -100,26 +99,21 @@ for start in range(0, max_results_per_city, 10):
                                 print("------------------------------------------------------------")
                             except:
                                 print(sys.exc_info())
-                                print("haha")
-                                job_post.append("Nothing_found")
-                                # job_post.append("Nothing_found")
-                                # print(sample_df[['company_industry']])
-                                # print(sample_df[sample_df.columns[0:3]])
+                                job_post.append("No company information found")
                             try:
                                 text = b.text.strip()
                                 jsonString = scraping_keywords.convert_text_to_API_Format(text)
                                 key_words = scraping_keywords.extract_keywords(jsonString)
                                 job_post.append(key_words)
                             except:
-                                job_post.append("Nothing_found")
+                                job_post.append("No key words created")
 
                 except:
-                    print("invalid url")
-                    job_post.append("invalid url")
+                    job_post.append("Bad url to find company info")
+                    job_post.append("Bad url to find key words")
 
             else:
-                job_post.append("Nothing_found")
-                print("url not found")
+                job_post.append("Url not found")
         company = div.find_all(name="span", attrs={"class": "company"})
         if len(company) > 0:
             for b in company:
@@ -134,8 +128,11 @@ for start in range(0, max_results_per_city, 10):
             job_post.append(span.text)
             # grabbing summary text
         d = div.findAll('span', attrs={'class': 'summary'})
-        for span in d:
-            job_post.append(span.text.strip())
+        if(len(d)==0):
+            job_post.append('No summary found')
+        else:
+            for span in d:
+                job_post.append(span.text.strip())
             # grabbing salary
         try:
             job_post.append(div.find('nobr').text)
@@ -145,13 +142,15 @@ for start in range(0, max_results_per_city, 10):
                 div_three = div_two.find("div")
                 job_post.append(div_three.text.strip())
             except:
-                job_post.append("Nothing_found")
+                job_post.append("No salary found")
                 # appending list of job post info to dataframe at index num
         if url != None:
             job_post.append(url)
         else:
             job_post.append("No url found")
-        sample_df.loc[num] = job_post
+
+        if scraping_keywords.compare_key_words(key_words):
+            sample_df.loc[num] = job_post
 
 # saving sample_df as a local csv file — define your own local path to save contents
 sample_df.to_csv("test.csv", encoding='utf-8')
