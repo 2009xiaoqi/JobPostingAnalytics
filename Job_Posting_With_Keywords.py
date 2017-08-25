@@ -54,7 +54,7 @@ technology_skills=["AI", "Blockchain", "Bots", "Cloud Platforms", "Cognitive Com
 max_results_per_city = 100
 city_set = ['New+York', 'Chicago', 'San+Francisco', 'Austin', 'Seattle', 'Los+Angeles', 'Philadelphia', 'Atlanta',
             'Dallas', 'Pittsburgh', 'Portland', 'Phoenix', 'Denver', 'Houston', 'Miami', 'Washington+DC', 'Boulder']
-columns = ["job_title","company_industry","key_words","company_name", "location", "summary", "salary", "url"]
+columns = ["job_title","company_industry","key_words","company_name", "location", "summary", "time_posted", "salary", "url"]
 #columns = ["city", "job_title", "company_name", "location", "summary", "salary"]
 sample_df = pd.DataFrame(columns=columns)
 #for city in city_set:
@@ -133,6 +133,13 @@ for start in range(0, max_results_per_city, 10):
         else:
             for span in d:
                 job_post.append(span.text.strip())
+        #grab posting time
+        c = div.findAll('span', attrs={'class': 'date'})
+        if (len(c) == 0):
+            job_post.append('No date found')
+        else:
+            for s in c:
+                job_post.append(s.text.strip())
             # grabbing salary
         try:
             job_post.append(div.find('nobr').text)
@@ -153,7 +160,7 @@ for start in range(0, max_results_per_city, 10):
             sample_df.loc[num] = job_post
 
 # saving sample_df as a local csv file — define your own local path to save contents
-sample_df.to_csv("test.csv", encoding='utf-8')
+sample_df.to_csv("tech_health_with_time.csv", encoding='utf-8')
 # pathName = "C:\Users\JiLi\Desktop\JobPosting.csv"
 # sample_df.to_csv(pathName)
 #
